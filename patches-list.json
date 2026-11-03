@@ -5,7 +5,7 @@
     {
       "name": "Change package name",
       "description": "Renames the SwiftKey package so the patched build installs next to the stock SwiftKey (which matters when the original is the preinstalled default keyboard and cannot be removed). By default \".morphe\" is appended. Unlike a plain manifest rename this also renames the signature permission and the provider authorities (install conflicts), the application_id resource that builds the FileProvider authority, and the hardcoded self-references in code, including the main process name check that otherwise silently skips app initialization. Do not combine with Morphe's \"Clone app\" patch.",
-      "default": false,
+      "default": true,
       "dependencies": [
         "BytecodePatch"
       ],
