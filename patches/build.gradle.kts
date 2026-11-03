@@ -1,13 +1,13 @@
-group = "io.github.arandomhooman"
+group = "io.github.mrhuaweifan"
 
 patches {
     about {
-        name = "Hooman's Morphe Patches"
-        description = "Personal Morphe patches for paid Android apps."
-        source = "git@github.com:arandomhooman/hoomans-morphe-patches.git"
-        author = "arandomhooman"
+        name = "SwiftKey Patches"
+        description = "Morphe patches for Microsoft SwiftKey 9.13.13.5."
+        source = "git@github.com:MrHuaweiFan/SwiftKey-Patches.git"
+        author = "MrHuaweiFan"
         contact = "na"
-        website = "https://github.com/arandomhooman/hoomans-morphe-patches"
+        website = "https://github.com/MrHuaweiFan/SwiftKey-Patches"
         license = "GPLv3"
     }
 }

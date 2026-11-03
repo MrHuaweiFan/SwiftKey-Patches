@@ -6,8 +6,6 @@ readonly source_branch="${BACKMERGE_SOURCE_BRANCH:-main}"
 readonly target_branch="${BACKMERGE_TARGET_BRANCH:-dev}"
 readonly commit_message="${BACKMERGE_COMMIT_MESSAGE:-chore: back-merge main into dev [skip ci]}"
 readonly -a generated_files=(
-  "CHANGELOG.md"
-  "README.md"
   "gradle.properties"
   "patches-bundle.json"
   "patches-list.json"
