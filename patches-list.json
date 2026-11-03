@@ -3,6 +3,45 @@
   "version": "1.0.0",
   "patches": [
     {
+      "name": "Change package name",
+      "description": "Renames the SwiftKey package so the patched build installs next to the stock SwiftKey (which matters when the original is the preinstalled default keyboard and cannot be removed). By default \".morphe\" is appended. Unlike a plain manifest rename this also renames the signature permission and the provider authorities (install conflicts), the application_id resource that builds the FileProvider authority, and the hardcoded self-references in code, including the main process name check that otherwise silently skips app initialization. Do not combine with Morphe's \"Clone app\" patch.",
+      "default": false,
+      "dependencies": [
+        "BytecodePatch"
+      ],
+      "compatiblePackages": [
+        {
+          "packageName": "com.touchtype.swiftkey",
+          "name": "Microsoft SwiftKey",
+          "description": null,
+          "apkFileType": null,
+          "appIconColor": "#00A4EF",
+          "signatures": null,
+          "targets": [
+            {
+              "version": "9.13.13.5",
+              "isExperimental": false,
+              "minSdk": null,
+              "description": null
+            }
+          ]
+        }
+      ],
+      "options": [
+        {
+          "key": "packageName",
+          "title": "Package name",
+          "description": "Package name for the renamed SwiftKey. \"Default\" appends \".morphe\" to com.touchtype.swiftkey.",
+          "required": true,
+          "type": "kotlin.String",
+          "default": "Default",
+          "values": {
+            "Default": "Default"
+          }
+        }
+      ]
+    },
+    {
       "name": "Debloat",
       "description": "Removes SwiftKey's non-keyboard bloat from the root. Settings: the whole Account section, the Microsoft Rewards section, the AI achievements section inside Achievements, the Bing/Copilot search settings in Rich input and the online theme Gallery tab in Themes. Keyboard toolbar: the Writing assistant (Copilot), Create, Rewards, Share, Search, Tips/new message and Sign in items. Typing, clipboard, themes and the rest of the keyboard stay unchanged and functional.",
       "default": true,
@@ -58,9 +97,11 @@
     },
     {
       "name": "Disable network services",
-      "description": "Disables SwiftKey's own network-facing manifest components (telemetry services, PaperBoy uploads, cloud backup and sync, FCM push messaging and Microsoft token sharing) while keeping the INTERNET permission itself, so the app can no longer start network activity on its own. The keyboard and its settings keep working.",
+      "description": "Disables SwiftKey's own network-facing components (telemetry, PaperBoy uploads, cloud backup and sync, FCM push messaging and Microsoft token sharing) while keeping the INTERNET permission itself. Job-enqueued services are neutralized in code instead of the manifest, so disabling them can never crash the app; the keyboard and its settings keep working.",
       "default": true,
-      "dependencies": [],
+      "dependencies": [
+        "ResourcePatch"
+      ],
       "compatiblePackages": [
         {
           "packageName": "com.touchtype.swiftkey",
