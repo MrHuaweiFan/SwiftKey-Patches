@@ -1,16 +1,16 @@
 package hooman.morphe.patches.swiftkey.misc
 
-import app.morphe.patcher.extensions.InstructionExtensions.getInstruction
+import app.morphe.patcher.extensions.InstructionExtensions.instructions
 import app.morphe.patcher.extensions.InstructionExtensions.replaceInstruction
 import app.morphe.patcher.patch.Option
 import app.morphe.patcher.patch.PatchException
 import app.morphe.patcher.patch.bytecodePatch
 import app.morphe.patcher.patch.resourcePatch
 import app.morphe.patcher.patch.stringOption
-import app.morphe.patcher.string
-import app.morphe.patcher.util.matchAllMethodIndicesForEach
 import com.android.tools.smali.dexlib2.Opcode
 import com.android.tools.smali.dexlib2.iface.instruction.OneRegisterInstruction
+import com.android.tools.smali.dexlib2.iface.instruction.ReferenceInstruction
+import com.android.tools.smali.dexlib2.iface.reference.StringReference
 import hooman.morphe.patches.swiftkey.swiftKeyCompatibility
 import org.w3c.dom.Element
 
@@ -116,22 +116,30 @@ val changePackageNamePatch = resourcePatch(
                 // Every const-string "com.touchtype.swiftkey" across all dex files. The classes in
                 // classesKeepingOriginalPackage compare the constant against bundled data or feed
                 // the flavor resolver and must keep the original value.
-                string(ORIGINAL_PACKAGE).matchAllMethodIndicesForEach { index ->
-                    if (definingClass in classesKeepingOriginalPackage) {
-                        return@matchAllMethodIndicesForEach
-                    }
+                classDefByStrings(ORIGINAL_PACKAGE)
+                    .filter { it.type !in classesKeepingOriginalPackage }
+                    .forEach { classDef ->
+                        mutableClassDefBy(classDef).methods.forEach { method ->
+                            val matches = method.instructions.withIndex().filter { (_, original) ->
+                                (original.opcode == Opcode.CONST_STRING ||
+                                    original.opcode == Opcode.CONST_STRING_JUMBO) &&
+                                    ((original as? ReferenceInstruction)?.reference as? StringReference)
+                                        ?.string == ORIGINAL_PACKAGE
+                            }.toList()
 
-                    val original = getInstruction(index)
-                    val register = (original as OneRegisterInstruction).registerA
-                    val instruction = if (original.opcode == Opcode.CONST_STRING_JUMBO) {
-                        "const-string/jumbo v$register, \"$newPackageName\""
-                    } else {
-                        "const-string v$register, \"$newPackageName\""
-                    }
+                            matches.forEach { (index, original) ->
+                                val register = (original as OneRegisterInstruction).registerA
+                                val instruction = if (original.opcode == Opcode.CONST_STRING_JUMBO) {
+                                    "const-string/jumbo v$register, \"$newPackageName\""
+                                } else {
+                                    "const-string v$register, \"$newPackageName\""
+                                }
 
-                    replaceInstruction(index, instruction)
-                    replacedCount++
-                }
+                                method.replaceInstruction(index, instruction)
+                                replacedCount++
+                            }
+                        }
+                    }
 
                 if (replacedCount == 0) {
                     throw PatchException(

@@ -6,6 +6,7 @@ import app.morphe.patcher.methodCall
 import app.morphe.patcher.patch.PatchException
 import app.morphe.patcher.patch.bytecodePatch
 import app.morphe.patcher.patch.resourcePatch
+import com.android.tools.smali.dexlib2.AccessFlags
 import hooman.morphe.patches.swiftkey.swiftKeyCompatibility
 import org.w3c.dom.Element
 
@@ -18,7 +19,6 @@ import org.w3c.dom.Element
 // R8-renamed parameter types.
 internal object TelemetryJobIntentServiceEnqueueFingerprint : Fingerprint(
     definingClass = "Lcom/touchtype/telemetry/TelemetryJobIntentService;",
-    isStatic = true,
     returnType = "V",
     filters = listOf(
         methodCall(
@@ -26,11 +26,11 @@ internal object TelemetryJobIntentServiceEnqueueFingerprint : Fingerprint(
             name = "b",
         ),
     ),
+    custom = { method, _ -> AccessFlags.STATIC.isSet(method.accessFlags) },
 )
 
 internal object SyncServiceEnqueueFingerprint : Fingerprint(
     definingClass = "Lcom/touchtype/cloud/sync/SyncService;",
-    isStatic = true,
     returnType = "V",
     filters = listOf(
         methodCall(
@@ -38,6 +38,7 @@ internal object SyncServiceEnqueueFingerprint : Fingerprint(
             name = "b",
         ),
     ),
+    custom = { method, _ -> AccessFlags.STATIC.isSet(method.accessFlags) },
 )
 
 /**
