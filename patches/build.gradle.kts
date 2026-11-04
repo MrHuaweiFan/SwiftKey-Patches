@@ -1,3 +1,5 @@
+import org.gradle.process.CommandLineArgumentProvider
+
 group = "io.github.mrhuaweifan"
 
 patches {
@@ -82,15 +84,22 @@ tasks {
         classpath = sourceSets["main"].runtimeClasspath + patchListGeneratorClasspath + coroutinesClasspath
         mainClass.set("util.ApkRunnerKt")
 
-        val mpp = providers.gradleProperty("mpp").get()
-        val input = providers.gradleProperty("in").get()
-        val output = providers.gradleProperty("out").get()
-        val mode = providers.gradleProperty("mode").getOrElse("defaults")
-        val ks = providers.gradleProperty("ks").get()
-        val kspass = providers.gradleProperty("kspass").get()
-        val alias = providers.gradleProperty("alias").get()
-
-        args = listOf(mpp, input, output, mode, ks, kspass, alias)
+        // Resolved lazily (only when the task actually runs) so that merely configuring the
+        // project, e.g. `./gradlew tasks` from semantic-release, does not require -Pmpp etc.
+        argumentProviders.add(
+            CommandLineArgumentProvider {
+                fun prop(name: String) = providers.gradleProperty(name).get()
+                listOf(
+                    prop("mpp"),
+                    prop("in"),
+                    prop("out"),
+                    providers.gradleProperty("mode").getOrElse("defaults"),
+                    prop("ks"),
+                    prop("kspass"),
+                    prop("alias"),
+                )
+            },
+        )
 
         // The runner needs the patcher at runtime; it is provided by patcherProvided,
         // which is part of the implementation (and thus runtime) classpath already.
