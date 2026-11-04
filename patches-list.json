@@ -1,6 +1,6 @@
 {
   "NOTE": "Do NOT manually edit this file. This file is automatically updated when semantic release (release.yml) runs. Manually editing this file can break your releases and break third party tools that use this file.",
-  "version": "1.2.4",
+  "version": "1.0.0",
   "patches": [
     {
       "name": "Add blank toolbar elements",
@@ -60,7 +60,7 @@
           "title": "Package name",
           "description": "Package name for the renamed SwiftKey. \"Default\" appends \".morphe\" to com.touchtype.swiftkey.",
           "required": true,
-          "type": "java.lang.String (Kotlin reflection is not available)",
+          "type": "kotlin.String",
           "default": "Default",
           "values": {
             "Default": "Default"
@@ -153,7 +153,7 @@
           "title": "KLIPY API key",
           "description": "Your KLIPY app key (create one for free at klipy.com, Partner Panel - API Keys). Leave empty if you do not want GIF search.",
           "required": false,
-          "type": "java.lang.String (Kotlin reflection is not available)",
+          "type": "kotlin.String",
           "default": "",
           "values": null
         }
