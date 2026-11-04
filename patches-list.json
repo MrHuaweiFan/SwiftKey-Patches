@@ -1,13 +1,14 @@
 {
   "NOTE": "Do NOT manually edit this file. This file is automatically updated when semantic release (release.yml) runs. Manually editing this file can break your releases and break third party tools that use this file.",
-  "version": "1.2.4",
+  "version": "1.3.0",
   "patches": [
     {
       "name": "Add blank toolbar elements",
-      "description": "Adds six blank elements to the keyboard's toolbar - real catalog items like the emoji, GIF or incognito buttons, labeled Blank 1 to Blank 6, that render as empty transparent buttons of the same size and do nothing when tapped. Because they are proper items, they show up in the toolbar customizer's reorder screen and can be dragged, reordered and removed like any other item. On by default; turn it off before patching if you do not want the blank elements. 1.2.1 fixed the factory hook of 1.2.0, whose inverted branch crashed the keyboard on open with 'No toolbar item for toolbar item type 100'.",
+      "description": "Adds 1-6 blank toolbar elements you can reorder like any other item.",
       "default": true,
       "dependencies": [
-        "ResourcePatch"
+        "ResourcePatch",
+        "BytecodePatch"
       ],
       "compatiblePackages": [
         {
@@ -27,11 +28,67 @@
           ]
         }
       ],
-      "options": []
+      "options": [
+        {
+          "key": "blankCount",
+          "title": "Blank elements",
+          "description": "How many blank elements to add to the toolbar (1 to 6).",
+          "required": false,
+          "type": "kotlin.Int",
+          "default": 6,
+          "values": {
+            "1": 1,
+            "2": 2,
+            "3": 3,
+            "4": 4,
+            "5": 5,
+            "6": 6
+          }
+        }
+      ]
     },
     {
       "name": "Change package name",
-      "description": "Renames the SwiftKey package so the patched build installs next to the stock SwiftKey (which matters when the original is the preinstalled default keyboard and cannot be removed). By default \".morphe\" is appended. Unlike a plain manifest rename this also renames the signature permission and the provider authorities (install conflicts), the application_id resource that builds the FileProvider authority, and the hardcoded self-references in code, including the main process name check that otherwise silently skips app initialization. Do not combine with Morphe's \"Clone app\" patch.",
+      "description": "Renames the package (appends .morphe) so it installs next to the stock factory settings app; breaks the keyboard link.",
+      "default": false,
+      "dependencies": [
+        "BytecodePatch"
+      ],
+      "compatiblePackages": [
+        {
+          "packageName": "com.swiftkey.swiftkeyconfigurator",
+          "name": "SwiftKey factory settings",
+          "description": null,
+          "apkFileType": null,
+          "appIconColor": "#00A4EF",
+          "signatures": null,
+          "targets": [
+            {
+              "version": "2.2.0.314",
+              "isExperimental": false,
+              "minSdk": null,
+              "description": null
+            }
+          ]
+        }
+      ],
+      "options": [
+        {
+          "key": "packageName",
+          "title": "Package name",
+          "description": "Package name for the renamed configurator. \"Default\" appends \".morphe\" to com.swiftkey.swiftkeyconfigurator.",
+          "required": true,
+          "type": "kotlin.String",
+          "default": "Default",
+          "values": {
+            "Default": "Default"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Change package name",
+      "description": "Renames the package (appends .morphe) so the patched build installs next to the stock SwiftKey.",
       "default": true,
       "dependencies": [
         "BytecodePatch"
@@ -69,8 +126,33 @@
       ]
     },
     {
+      "name": "Compatible with .morphe SwiftKey",
+      "description": "Keeps the factory settings link intact; re-signs it with your Morphe key.",
+      "default": true,
+      "dependencies": [],
+      "compatiblePackages": [
+        {
+          "packageName": "com.swiftkey.swiftkeyconfigurator",
+          "name": "SwiftKey factory settings",
+          "description": null,
+          "apkFileType": null,
+          "appIconColor": "#00A4EF",
+          "signatures": null,
+          "targets": [
+            {
+              "version": "2.2.0.314",
+              "isExperimental": false,
+              "minSdk": null,
+              "description": null
+            }
+          ]
+        }
+      ],
+      "options": []
+    },
+    {
       "name": "Debloat",
-      "description": "Deletes SwiftKey's non-keyboard bloat from the root. Toolbar: the Rewards, stickers, sign-in, rich media, search, share, Copilot (writing assistant), Create and Tips items are removed from the item catalog itself, so they are gone from the strip, the toolgrid, the customizer's reorder screen and saved orderings alike (1.1.0 only hid them from the rendered strip, and the sign-in button even came back through the state builder's forced insertion - both paths are cut now). 1.2.1 also deletes the two STICKERS tabs from the emoji/GIF panel itself (they are catalog pages of their own, which 1.2.0 missed), so the panel really only offers emojis and GIFs. Settings: the whole Account section, the Microsoft Rewards section, the AI achievements section inside Achievements, the Bing/Copilot search settings in Rich input, the online theme Gallery tab in Themes, and the sign-in screen's activity is deleted from the manifest. Typing, clipboard, themes and the rest of the keyboard stay unchanged and functional.",
+      "description": "Removes the non-keyboard bloat: toolbar items, settings entries, theme gallery, achievements and the smart clip search button.",
       "default": true,
       "dependencies": [
         "ResourcePatch"
@@ -97,7 +179,34 @@
     },
     {
       "name": "Disable cloud sign-in prompt",
-      "description": "Keeps the optional Microsoft cloud sign-in onboarding from replacing SwiftKey's launcher, so local keyboard setup and settings remain usable without an account. This does not sign in or unlock cloud sync and other account-backed features.",
+      "description": "Keeps the Microsoft cloud sign-in onboarding from hijacking the launcher.",
+      "default": true,
+      "dependencies": [
+        "ResourcePatch"
+      ],
+      "compatiblePackages": [
+        {
+          "packageName": "com.touchtype.swiftkey",
+          "name": "Microsoft SwiftKey",
+          "description": null,
+          "apkFileType": null,
+          "appIconColor": "#00A4EF",
+          "signatures": null,
+          "targets": [
+            {
+              "version": "9.12.13.13",
+              "isExperimental": false,
+              "minSdk": null,
+              "description": null
+            }
+          ]
+        }
+      ],
+      "options": []
+    },
+    {
+      "name": "Disable telemetry",
+      "description": "Stops SwiftKey's telemetry records and uploads, Adjust, Crashlytics and legacy Google Analytics.",
       "default": true,
       "dependencies": [
         "ResourcePatch"
@@ -124,7 +233,7 @@
     },
     {
       "name": "GIF source",
-      "description": "Replaces SwiftKey's dead Tenor GIF backend (the Tenor API was shut down on 30 June 2026) with KLIPY, the GIF service the new SwiftKey versions use. The keyboard's GIF panel, paging, recents row and share flow keep working unchanged. Requires a free KLIPY API key from klipy.com (Partner Panel - API Keys): enter it in the option below; without a key every GIF search returns an empty result. Compatible with the Network connections patch: the GIF search switch keeps controlling the feature.",
+      "description": "Replaces SwiftKey's dead Tenor GIF backend with KLIPY; needs a free KLIPY API key (klipy.com).",
       "default": true,
       "dependencies": [
         "BytecodePatch"
@@ -160,12 +269,10 @@
       ]
     },
     {
-      "name": "Network connections",
-      "description": "Cuts SwiftKey's telemetry and tracking network access off at the root (telemetry records and uploads, Firebase, Crashlytics, Adjust, Google Analytics, experiments, the Copilot backend, theme store downloads, token sharing and account APIs - without any switch, they can never connect) and adds a native Network connections section to SwiftKey's settings with a switch for every remaining online feature: GIF search, the translator and language/model downloads. The switches apply immediately everywhere - the keyboard, the settings app and the background components - because the guard lives at the connection setup itself, so it keeps working while only the keyboard is in use.",
-      "default": true,
-      "dependencies": [
-        "ResourcePatch"
-      ],
+      "name": "Remove GIFs and translator",
+      "description": "Removes the GIF panel and button and the translator toolbar item.",
+      "default": false,
+      "dependencies": [],
       "compatiblePackages": [
         {
           "packageName": "com.touchtype.swiftkey",

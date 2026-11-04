@@ -1,7 +1,7 @@
 {
-  "created_at": "2026-11-04T21:51:22",
-  "description": "## [1.2.4](https://github.com/MrHuaweiFan/SwiftKey-Patches/compare/v1.2.3...v1.2.4) (2026-11-04)\n\n### 🐛 Bug Fixes\n\n* **release:** publish the 1.2.4 source as v1.2.4 ([b35c3e8](https://github.com/MrHuaweiFan/SwiftKey-Patches/commit/b35c3e841cb139c9740837a2a8c7a6bab4e6b1df))",
-  "download_url": "https://github.com/MrHuaweiFan/SwiftKey-Patches/releases/download/v1.2.4/patches-1.2.4.mpp",
+  "created_at": "2026-11-04T22:01:48",
+  "description": "## [1.3.0](https://github.com/MrHuaweiFan/SwiftKey-Patches/compare/v1.2.4...v1.3.0) (2026-11-04)\n\n### 🐛 Bug Fixes\n\n* **build:** load ARSCLib reflectively in ApkRunner ([572a333](https://github.com/MrHuaweiFan/SwiftKey-Patches/commit/572a33366e9ea00902395e44c0d82a59e91cf491))\n* **network:** remove the Network connections patch that did not work ([7fdb803](https://github.com/MrHuaweiFan/SwiftKey-Patches/commit/7fdb8035e4d775516f53a7481631b425f0e85862))\n\n### ✨ New Features\n\n* **blank-elements:** choose how many blank elements to add (1 to 6) ([82e69d9](https://github.com/MrHuaweiFan/SwiftKey-Patches/commit/82e69d977b9ce727eec67c353cc1035a0fb65e04))\n* **configurator:** support SwiftKey factory settings 2.2.0.314 ([1816d03](https://github.com/MrHuaweiFan/SwiftKey-Patches/commit/1816d03e97c443517ae13bd3b976a095483a661f))\n* **debloat:** add Remove GIFs and translator patch ([17556d7](https://github.com/MrHuaweiFan/SwiftKey-Patches/commit/17556d76b29114e1c2fbfde910caa9c31d217f7b))\n* **debloat:** improve the debloat patch ([804cb2d](https://github.com/MrHuaweiFan/SwiftKey-Patches/commit/804cb2d5c87eca3acc63051985453b7e1daaa03c))\n* **telemetry:** add standalone Disable telemetry patch ([a8dd3a9](https://github.com/MrHuaweiFan/SwiftKey-Patches/commit/a8dd3a9218ae75efa94f0ce164861bdcb96eb1fe))",
+  "download_url": "https://github.com/MrHuaweiFan/SwiftKey-Patches/releases/download/v1.3.0/patches-1.3.0.mpp",
   "signature_download_url": "",
-  "version": "1.2.4"
+  "version": "1.3.0"
 }
