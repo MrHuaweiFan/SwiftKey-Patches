@@ -284,18 +284,8 @@ internal val debloatSettingsResourcePatch = resourcePatch(
 @Suppress("unused")
 val debloatPatch = bytecodePatch(
     name = "Debloat",
-    description = "Deletes SwiftKey's non-keyboard bloat from the root. Toolbar: the Rewards, " +
-        "stickers, sign-in, rich media, search, share, Copilot (writing assistant), Create and " +
-        "Tips items are removed from the item catalog itself, so they are gone from the strip, " +
-        "the toolgrid, the customizer's reorder screen and saved orderings alike (1.1.0 only " +
-        "hid them from the rendered strip, and the sign-in button even came back through the " +
-        "state builder's forced insertion - both paths are cut now). 1.2.1 also deletes the two " +
-        "STICKERS tabs from the emoji/GIF panel itself (they are catalog pages of their own, " +
-        "which 1.2.0 missed), so the panel really only offers emojis and GIFs. Settings: the " +
-        "whole Account section, the Microsoft Rewards section, the AI achievements section " +
-        "inside Achievements, the Bing/Copilot search settings in Rich input, the online theme " +
-        "Gallery tab in Themes, and the sign-in screen's activity is deleted from the manifest. " +
-        "Typing, clipboard, themes and the rest of the keyboard stay unchanged and functional.",
+    description = "Removes the non-keyboard bloat: toolbar items, settings entries, " +
+        "theme gallery, achievements and the smart clip search button.",
 ) {
     compatibleWith(swiftKeyCompatibility)
     extendWith("extensions/swiftkey.mpe")
@@ -387,5 +377,31 @@ val debloatPatch = bytecodePatch(
         val tabRegister = (themesMethod.instructions.elementAt(galleryDefault)
             as OneRegisterInstruction).registerA
         themesMethod.replaceInstruction(galleryDefault, "sget-object v$tabRegister, $YOUR_THEMES_TAB")
+
+        // ---- 6. Smart clip: never create the action chips ----------------------------------
+        //
+        // The smart clip ribbon above the suggestion strip (where the copied-text pill with the
+        // clipboard icon appears) is built from up to three views: the quick paste pill, created
+        // directly by the ribbon builder, and up to two action chips created by the factory
+        // methods of the smart clip view holder - LYm/c;->u for the first action (the round
+        // button left of the pill, e.g. the magnifying web-search button), LYm/c;->s for the
+        // second. Neutralizing both factories returns null for every chip: the ribbon builder
+        // null-checks each chip before adding it, its id list builder skips nulls, and with only
+        // the pill left it centers the pill between the parent edges on its own - the wanted end
+        // state, reached without touching a single layout call site, crash-free.
+        SmartClipFirstActionChipFingerprint.method.addInstructions(
+            0,
+            """
+                const/4 p1, 0x0
+                return-object p1
+            """,
+        )
+        SmartClipSecondActionChipFingerprint.method.addInstructions(
+            0,
+            """
+                const/4 p1, 0x0
+                return-object p1
+            """,
+        )
     }
 }

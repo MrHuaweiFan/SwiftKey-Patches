@@ -132,3 +132,42 @@ internal object ThemesInitialStateFingerprint : Fingerprint(
             } == true
     },
 )
+
+/**
+ * LYm/c;->u(Landroid/content/Context;LRl/w;LXn/h;Landroidx/lifecycle/M;LZr/x0;)Lgn/a; - the smart
+ * clip view holder's factory for the FIRST action chip of the smart clip ribbon above the
+ * suggestion strip: the round button that appears left of the quick paste pill when text is
+ * copied (e.g. the magnifying web-search button for the copied text, or the image search for
+ * copied images). Pinned by its parameter shape plus the "clip" and "themeViewModel" null checks
+ * of its body.
+ */
+internal object SmartClipFirstActionChipFingerprint : Fingerprint(
+    returnType = "Lgn/a;",
+    parameters = listOf(
+        "Landroid/content/Context;",
+        "LRl/w;",
+        "LXn/h;",
+        "Landroidx/lifecycle/M;",
+        "LZr/x0;",
+    ),
+    strings = listOf("clip", "themeViewModel"),
+)
+
+/**
+ * LYm/c;->s(Landroid/content/Context;Lgn/g;LXn/h;Landroidx/lifecycle/M;LRl/w;LZr/x0;)Lgn/a; - the
+ * smart clip view holder's factory for the SECOND action chip of the same ribbon (created from the
+ * clip's action model; its null is what keeps the ribbon to the pill alone). Pinned by its
+ * parameter shape plus the "themeViewModel" and "clip" null checks of its body.
+ */
+internal object SmartClipSecondActionChipFingerprint : Fingerprint(
+    returnType = "Lgn/a;",
+    parameters = listOf(
+        "Landroid/content/Context;",
+        "Lgn/g;",
+        "LXn/h;",
+        "Landroidx/lifecycle/M;",
+        "LRl/w;",
+        "LZr/x0;",
+    ),
+    strings = listOf("themeViewModel", "clip"),
+)
