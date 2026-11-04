@@ -6,7 +6,6 @@ import app.morphe.patcher.apk.ApkSigner
 import app.morphe.patcher.apk.ApkSigner.PrivateKeyCertificatePair
 import app.morphe.patcher.apk.ApkUtils
 import app.morphe.patcher.patch.loadPatchesFromJar
-import com.reandroid.apk.ApkModule
 import java.io.File
 import java.security.KeyStore
 import java.security.PrivateKey
@@ -48,7 +47,13 @@ fun main(args: Array<String>) {
     require(mode == "defaults" || mode == "all") { "unknown mode: $mode" }
 
     // ---- 1. Load the bundle and select the patches ------------------------------------------
-    val targetPackage = ApkModule.loadApkFile(inputApk).androidManifestBlock.packageName
+    // ARSCLib is only on the runtime classpath (a transitive dependency of the patcher), not the
+    // compile classpath, so it is looked up reflectively.
+    val apkModule = Class.forName("com.reandroid.apk.ApkModule")
+        .getMethod("loadApkFile", File::class.java)
+        .invoke(null, inputApk)
+    val manifestBlock = apkModule.javaClass.getMethod("getAndroidManifestBlock").invoke(apkModule)
+    val targetPackage = manifestBlock.javaClass.getMethod("getPackageName").invoke(manifestBlock) as String?
     val patches = loadPatchesFromJar(setOf(patchesFile))
     val included = patches
         .filter { it.name != null }
