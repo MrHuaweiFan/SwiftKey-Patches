@@ -17,6 +17,11 @@ readonly -a pre_switch_files=(
 
 git config user.name "github-actions[bot]"
 git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+if ! git ls-remote --exit-code --heads "$remote" "$target_branch" >/dev/null 2>&1; then
+  echo "No $remote/$target_branch branch exists; nothing to back-merge."
+  exit 0
+fi
+
 git fetch "$remote" "$source_branch" "$target_branch"
 
 # The workflow can rewrite release metadata and package-lock.json after semantic-release commits.
