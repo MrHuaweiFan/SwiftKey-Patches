@@ -128,3 +128,8 @@ node_modules/
 # Ignore IDEA files
 .idea/
 local.properties
+
+# Local signing key and build-machine artifacts (never commit)
+/apk/
+*.p12
+/runner-classpath.txt

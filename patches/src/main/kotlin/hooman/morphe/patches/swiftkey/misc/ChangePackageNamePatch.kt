@@ -20,23 +20,22 @@ private const val ORIGINAL_PACKAGE = "com.touchtype.swiftkey"
  * Classes whose hardcoded "com.touchtype.swiftkey" string constant must stay untouched, because it
  * is matched against DATA that still carries the original package name:
  *
- *  - Lkotlin/jvm/internal/m;: the build flavor resolver. "com.touchtype.swiftkey" maps to "market",
+ *  - Lc7/a;: the build flavor resolver. "com.touchtype.swiftkey" maps to "market",
  *    everything unknown maps to "dev". Renaming here would report the clone as a dev build.
- *  - Li60/x; and Lk60/e;: pass the constant into the flavor resolver (autosuggest model name,
- *    tips web view variant).
- *  - Lcom/touchtype/bibo/staticconfig/o;: matches the packageName selectors of the bundled
- *    appconfig yaml/json static configs, which are keyed by "com.touchtype.swiftkey".
- *  - Low/d;: kotlinx-serialization cloud identity descriptor; the backend expects the original id.
- *  - La40/z2;: builds the MSAL redirect URI, which matches the "com.touchtype.swiftkey-auth"
- *    scheme that stays declared in the manifest.
+ *  - LLm/g;: passes the constant into the flavor resolver.
+ *  - LIo/F; and LMq/d;: append package_name=com.touchtype.swiftkey as a query parameter to the
+ *    theme/sticker store API requests; the backend expects the original id.
+ *  - LNk/N;: serializes the constant as "packageName" into the cloud sync device identity JSON;
+ *    the backend expects the original id.
+ *  - LTl/h;: adds the constant to the request parameter map of the language services API.
  */
 private val classesKeepingOriginalPackage = setOf(
-    "Lkotlin/jvm/internal/m;",
-    "Li60/x;",
-    "Lk60/e;",
-    "Lcom/touchtype/bibo/staticconfig/o;",
-    "Low/d;",
-    "La40/z2;",
+    "Lc7/a;",
+    "LLm/g;",
+    "LIo/F;",
+    "LMq/d;",
+    "LNk/N;",
+    "LTl/h;",
 )
 
 private const val DYNAMIC_RECEIVER_PERMISSION_SUFFIX = "DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
@@ -120,7 +119,8 @@ val changePackageNamePatch = resourcePatch(
                     .filter { it.type !in classesKeepingOriginalPackage }
                     .forEach { classDef ->
                         mutableClassDefBy(classDef).methods.forEach { method ->
-                            val matches = method.instructions.withIndex().filter { (_, original) ->
+                            val implementation = method.implementation ?: return@forEach
+                            val matches = implementation.instructions.withIndex().filter { (_, original) ->
                                 (original.opcode == Opcode.CONST_STRING ||
                                     original.opcode == Opcode.CONST_STRING_JUMBO) &&
                                     ((original as? ReferenceInstruction)?.reference as? StringReference)

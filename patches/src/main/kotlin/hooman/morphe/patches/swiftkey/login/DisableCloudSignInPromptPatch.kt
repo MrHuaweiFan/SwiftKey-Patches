@@ -7,7 +7,7 @@ import app.morphe.patcher.patch.resourcePatch
 import hooman.morphe.patches.swiftkey.swiftKeyCompatibility
 import org.w3c.dom.Element
 
-// The stock value is already false in 9.13.13.5. Keep it explicit in the patched APK, while the
+// The stock value is already false in 9.12.13.13. Keep it explicit in the patched APK, while the
 // bytecode patch below prevents a runtime preference override from re-enabling the automatic prompt.
 private val disableCloudSignInResourcePatch = resourcePatch(
     description = "Keeps SwiftKey's optional cloud sign-in onboarding disabled. Applied automatically " +
@@ -44,7 +44,14 @@ val disableCloudSignInPromptPatch = bytecodePatch(
 
     execute {
         // This helper is used only for automatic onboarding launches. Manual Account settings invoke
-        // the sign-in flow directly, so they and real account state remain untouched.
-        CloudSignInPromptFingerprint.method.addInstructions(0, "return-void")
+        // the sign-in flow directly, so they and real account state remain untouched. The helper
+        // returns a boolean ("prompt shown"), so the neutralized entry reports false.
+        CloudSignInPromptFingerprint.method.addInstructions(
+            0,
+            """
+                const/4 v0, 0x0
+                return v0
+            """,
+        )
     }
 }

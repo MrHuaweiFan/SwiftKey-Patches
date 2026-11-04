@@ -3,27 +3,89 @@ package hooman.morphe.patches.swiftkey.debloat
 import app.morphe.patcher.Fingerprint
 import app.morphe.patcher.methodCall
 import com.android.tools.smali.dexlib2.AccessFlags
+import com.android.tools.smali.dexlib2.Opcode
+import com.android.tools.smali.dexlib2.iface.Method
 import com.android.tools.smali.dexlib2.iface.instruction.ReferenceInstruction
+import com.android.tools.smali.dexlib2.iface.reference.FieldReference
+import com.android.tools.smali.dexlib2.iface.reference.MethodReference
 
 /**
- * Lcom/touchtype/keyboard/toolbar/Toolbar;->g(ILjava/lang/Object;)V — the toolbar strip's state
- * observer. It merges the saved customizer ordering with the default item pages into one
- * ArrayList (Lrl0/r;->W0) and then rebuilds the strip's item buttons, so filtering the merged list
- * right after the merge removes items from the rendered toolbar in one place.
+ * Lcom/touchtype/keyboard/toolbar/Toolbar;->e(ILjava/lang/Object;)V — the toolbar strip's state
+ * observer of SwiftKey 9.12.13.13. It merges the saved customizer ordering with the default item
+ * pages into one ArrayList (Ltr/n;->b1) and then rebuilds the strip's item buttons, so filtering or
+ * extending the merged list right after the merge edits the rendered toolbar in one place.
  */
 internal object ToolbarStateObserverFingerprint : Fingerprint(
     accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.FINAL),
     returnType = "V",
     parameters = listOf("I", "Ljava/lang/Object;"),
     strings = listOf("state"),
-    filters = listOf(methodCall(definingClass = "Ltd0/c1;", name = "r")),
+    filters = listOf(methodCall(definingClass = "Ltr/n;", name = "b1")),
 )
 
 /**
- * Lo70/q;->invoke(Ljava/lang/Object;)Ljava/lang/Object; — the Achievements screen LazyColumn
- * content. It appends five slots through Ls1/h;->p(...): the level card, the "AI achievements"
- * section header, the AI achievement cards, the "Typing achievements" header and the typing
- * achievement cards. Identified uniquely by registering the AI header composable Lo70/c0;->f.
+ * Lio/e;-><clinit>()V — the toolbar item catalog of SwiftKey 9.12.13.13. It builds exactly three
+ * lists: the main customizer catalog through Ltr/l;->i0(...) and two smaller groups through
+ * Ltr/o;->j0(...). Every id that is not in the catalog is dropped by the toolbar state builder, so
+ * rewriting the lists right where they are built removes an item everywhere at once - from the
+ * customizer, from saved orderings and from the strip.
+ */
+internal object ToolbarCatalogFingerprint : Fingerprint(
+    definingClass = "Lio/e;",
+    returnType = "V",
+    filters = listOf(
+        methodCall(definingClass = "Ltr/l;", name = "i0"),
+        methodCall(definingClass = "Ltr/o;", name = "j0"),
+    ),
+    custom = { method, _ ->
+        method.implementation?.instructions?.count { instruction ->
+            instruction.opcode == Opcode.INVOKE_STATIC &&
+                (instruction as? ReferenceInstruction)?.reference?.toString() ==
+                "Ltr/o;->j0([Ljava/lang/Object;)Ljava/util/List;"
+        } == 2
+    },
+)
+
+/**
+ * Lio/v;->k(Z)Lio/w; — the toolbar state builder of SwiftKey 9.12.13.13. It reads the saved
+ * ordering ("readToolbarItemIds"), gates every id against the catalog plus the account id 0x17
+ * (sign-in), instantiates the items and force-inserts the sign-in item into the strip's first page
+ * when it is not there. The Debloat patch neutralizes both account paths in this method; the blank
+ * elements patch relies on its catalog ids passing the gate.
+ */
+internal object ToolbarStateBuilderFingerprint : Fingerprint(
+    accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.FINAL),
+    returnType = "Lio/w;",
+    parameters = listOf("Z"),
+    strings = listOf("readToolbarItemIds"),
+)
+
+/**
+ * LXn/e;->invoke(Ljava/lang/Object;)Ljava/lang/Object; — the toolbar item factory of SwiftKey
+ * 9.12.13.13. Its case 9 body turns an item id into the item instance (and throws
+ * "No toolbar item for toolbar item type" for unknown ids). Every toolbar item of the strip, the
+ * toolgrid and the customizer is created through this single method, which pins it without relying
+ * on any R8-renamed class name.
+ */
+internal object ToolbarItemFactoryFingerprint : Fingerprint(
+    accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.FINAL),
+    returnType = "Ljava/lang/Object;",
+    parameters = listOf("Ljava/lang/Object;"),
+    strings = listOf("No toolbar item for toolbar item type"),
+    custom = { method, _ ->
+        method.implementation?.instructions?.any { instruction ->
+            instruction.opcode == Opcode.CHECK_CAST &&
+                (instruction as? ReferenceInstruction)?.reference?.toString() == "LBp/g;"
+        } == true
+    },
+)
+
+/**
+ * LGo/b;->invoke(Ljava/lang/Object;)Ljava/lang/Object; — the Achievements screen LazyColumn
+ * content of 9.12.13.13. It appends five slots through Lq0/g;->n(...): the level card, the
+ * "AI achievements" section header (the Hk/D;->a composable), the AI achievement cards, the
+ * "Typing achievements" header (Hk/D;->b) and the typing achievement cards. Identified uniquely
+ * by registering the AI header composable Hk/D;->a.
  */
 internal object AchievementsContentFingerprint : Fingerprint(
     accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.FINAL),
@@ -32,46 +94,41 @@ internal object AchievementsContentFingerprint : Fingerprint(
     strings = listOf("\$this\$LazyColumn"),
     custom = { method, _ ->
         method.implementation?.instructions?.any { instruction ->
-            (instruction as? ReferenceInstruction)?.reference?.toString() == "Lo70/c0;->f:Lc3/m;"
+            (instruction as? ReferenceInstruction)?.reference?.toString() == "LHk/D;->a:LR0/d;"
         } == true
     },
 )
 
 /**
- * Lng0/s0;->invoke(...)Ljava/lang/Object; — the Themes screen tab row. It emits the three theme
- * store tabs through Lr2/o9;->b(...), the first one being the online "Gallery" tab (Lng0/c;->a).
+ * LHk/u;->invoke(...)Ljava/lang/Object; — the Themes screen tab row of 9.12.13.13. It emits the
+ * three theme store tabs through LG0/m3;->b(...), the first one being the online "Gallery" tab
+ * (the Lqp/f;->a composable).
  */
 internal object ThemesTabRowFingerprint : Fingerprint(
     accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.FINAL),
     returnType = "Ljava/lang/Object;",
     parameters = listOf("Ljava/lang/Object;", "Ljava/lang/Object;"),
-    filters = listOf(methodCall(definingClass = "Lr2/o9;", name = "b")),
+    filters = listOf(methodCall(definingClass = "LG0/m3;", name = "b")),
     custom = { method, _ ->
         method.implementation?.instructions?.any { instruction ->
-            (instruction as? ReferenceInstruction)?.reference?.toString() == "Lng0/c;->a:Lc3/m;"
+            (instruction as? ReferenceInstruction)?.reference?.toString() == "Lqp/f;->a:LR0/d;"
         } == true
     },
 )
 
 /**
- * Lmg0/e1;-><init>(...)V — the Themes screen view model constructor. It builds the initial
- * themes state with Lmg0/r0;-><init> and hardcodes the starting tab as the online "Gallery" tab
- * (Lmg0/n;->a). The patch swaps that single sget-object for the offline "Your themes" tab.
+ * Lpp/Z;-><init>(...)V — the Themes screen view model constructor of 9.12.13.13. It builds the
+ * initial themes state and hardcodes the starting tab as the online "Gallery" tab (Lpp/m;->a,
+ * the enum value GALLERY_THEMES). The patch swaps that single sget-object for the offline
+ * "Your themes" tab (Lpp/m;->b, YOUR_THEMES).
  */
 internal object ThemesInitialStateFingerprint : Fingerprint(
     returnType = "V",
-    parameters = listOf(
-        "Landroid/content/Context;",
-        "Lgd0/m0;",
-        "Lgd0/b;",
-        "Lk40/b;",
-        "Lae0/y2;",
-        "Lzb0/b;",
-    ),
     strings = listOf("themeManager", "incognitoModeModel"),
     custom = { method, _ ->
-        method.implementation?.instructions?.any { instruction ->
-            (instruction as? ReferenceInstruction)?.reference?.toString() == "Lmg0/n;->a:Lmg0/n;"
-        } == true
+        method.parameterTypes.firstOrNull()?.toString() == "Landroid/content/Context;" &&
+            method.implementation?.instructions?.any { instruction ->
+                (instruction as? ReferenceInstruction)?.reference?.toString() == "Lpp/m;->a:Lpp/m;"
+            } == true
     },
 )

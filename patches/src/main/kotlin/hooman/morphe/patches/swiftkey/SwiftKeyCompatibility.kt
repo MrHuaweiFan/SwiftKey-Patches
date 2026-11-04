@@ -7,5 +7,5 @@ internal val swiftKeyCompatibility = Compatibility(
     name = "Microsoft SwiftKey",
     packageName = "com.touchtype.swiftkey",
     appIconColor = 0x00A4EF,
-    targets = listOf(AppTarget("9.13.13.5")),
+    targets = listOf(AppTarget("9.12.13.13")),
 )
