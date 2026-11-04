@@ -16,13 +16,18 @@ public class VerifyMppDex {
         File mpp = new File(args[0]);
         String[] expected = {
             "Lhooman/morphe/patches/swiftkey/SwiftKeyCompatibilityKt;",
-            "Lhooman/morphe/patches/swiftkey/network/NetworkConnectionsPatchKt;",
-            "Lhooman/morphe/patches/swiftkey/network/OkHttpConnectFingerprint;",
             "Lhooman/morphe/patches/swiftkey/privacy/DisableTelemetryPatchKt;",
+            "Lhooman/morphe/patches/swiftkey/privacy/TelemetryRecordDispatchFingerprint;",
             "Lhooman/morphe/patches/swiftkey/debloat/DebloatPatchKt;",
+            "Lhooman/morphe/patches/swiftkey/debloat/RemoveGifsAndTranslatorPatchKt;",
+            "Lhooman/morphe/patches/swiftkey/debloat/SmartClipFirstActionChipFingerprint;",
             "Lhooman/morphe/patches/swiftkey/login/DisableCloudSignInPromptPatchKt;",
             "Lhooman/morphe/patches/swiftkey/misc/BlankElementsPatchKt;",
             "Lhooman/morphe/patches/swiftkey/misc/ChangePackageNamePatchKt;",
+            "Lhooman/morphe/patches/swiftkey/configurator/SwiftKeyConfiguratorCompatibilityKt;",
+            "Lhooman/morphe/patches/swiftkey/configurator/CompatibleWithMorphePatchKt;",
+            "Lhooman/morphe/patches/swiftkey/configurator/ChangeConfiguratorPackageNamePatchKt;",
+            "Lhooman/morphe/patches/swiftkey/gif/KlipyGifPatchKt;",
         };
         int dexCount = 0;
         java.util.Set<String> classes = new java.util.HashSet<>();

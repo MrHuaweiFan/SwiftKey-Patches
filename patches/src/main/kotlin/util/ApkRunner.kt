@@ -6,6 +6,7 @@ import app.morphe.patcher.apk.ApkSigner
 import app.morphe.patcher.apk.ApkSigner.PrivateKeyCertificatePair
 import app.morphe.patcher.apk.ApkUtils
 import app.morphe.patcher.patch.loadPatchesFromJar
+import com.reandroid.apk.ApkModule
 import java.io.File
 import java.security.KeyStore
 import java.security.PrivateKey
@@ -13,7 +14,7 @@ import java.security.cert.X509Certificate
 import java.util.Date
 
 /**
- * Applies a built patches bundle (.mpp) to a SwiftKey APK and signs the result.
+ * Applies a built patches bundle (.mpp) to an APK and signs the result.
  *
  * Usage:
  *   ApkRunner <patches.mpp> <input.apk> <output.apk> <defaults|all> <keystore-file> <keystore-password> <alias>
@@ -21,6 +22,9 @@ import java.util.Date
  * The mode selects the patch set:
  *  - "defaults": every patch whose default is on (the out-of-the-box experience)
  *  - "all": every patch, including the opt-in ones
+ *
+ * Only patches whose compatibility matches the input APK's package name are applied, so one
+ * bundle can carry patches for several apps (SwiftKey and the factory settings configurator).
  *
  * The keystore is created on first use (PKCS12) and reused afterwards, so all
  * builds made from the same checkout share one signature.
@@ -44,12 +48,20 @@ fun main(args: Array<String>) {
     require(mode == "defaults" || mode == "all") { "unknown mode: $mode" }
 
     // ---- 1. Load the bundle and select the patches ------------------------------------------
+    val targetPackage = ApkModule.loadApkFile(inputApk).androidManifestBlock.packageName
     val patches = loadPatchesFromJar(setOf(patchesFile))
     val included = patches
         .filter { it.name != null }
         .filter { if (mode == "all") true else it.default }
+        .filter { patch ->
+            // Keep patches that declare no compatibility at all, and patches that explicitly
+            // target the package of the APK being patched. Everything else (patches for another
+            // app in the same bundle) is skipped.
+            patch.compatibility?.any { it.packageName == null || it.packageName == targetPackage } ?: true
+        }
         .toSet()
-    println("Loaded ${patches.size} patches from ${patchesFile.name}, applying ${included.size} ($mode):")
+    println("Loaded ${patches.size} patches from ${patchesFile.name} for $targetPackage, " +
+        "applying ${included.size} ($mode):")
     included.sortedBy { it.name }.forEach { println("  - ${it.name}") }
 
     // ---- 2. Apply the patches ---------------------------------------------------------------

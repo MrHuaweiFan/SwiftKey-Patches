@@ -28,7 +28,7 @@ internal object TenorServiceFactoryFingerprint : Fingerprint(
 /**
  * The bytecode half of the "GIF source" patch: the Tenor service factory is replaced with the
  * injected KLIPY implementation. The dead factory body stays behind the early return, exactly
- * like the neutralized telemetry methods of the Network connections patch.
+ * like the neutralized telemetry methods of the Disable telemetry patch.
  */
 private val klipyGifBytecodePatch = bytecodePatch(
     description = "Replaces the dead Tenor GIF service with KLIPY. Applied automatically with " +
@@ -68,21 +68,12 @@ private val klipyGifBytecodePatch = bytecodePatch(
  * (https://klipy.com - API Keys), enter it below, and the GIF panel works again. In
  * testing mode the key is limited to 100 requests per hour, which is plenty for a
  * keyboard. Without a key every search returns an empty result instead of an error.
- *
- * Together with the Network connections patch the GIF search switch keeps gating the
- * feature: its guard admits api.klipy.com and the static*.klipy.com media hosts only
- * while the GIF search switch is on.
  */
 @Suppress("unused")
 val klipyGifPatch = resourcePatch(
     name = "GIF source",
-    description = "Replaces SwiftKey's dead Tenor GIF backend (the Tenor API was shut down " +
-        "on 30 June 2026) with KLIPY, the GIF service the new SwiftKey versions use. The " +
-        "keyboard's GIF panel, paging, recents row and share flow keep working unchanged. " +
-        "Requires a free KLIPY API key from klipy.com (Partner Panel - API Keys): enter it " +
-        "in the option below; without a key every GIF search returns an empty result. " +
-        "Compatible with the Network connections patch: the GIF search switch keeps " +
-        "controlling the feature.",
+    description = "Replaces SwiftKey's dead Tenor GIF backend with KLIPY; needs a free KLIPY " +
+        "API key (klipy.com).",
 ) {
     compatibleWith(swiftKeyCompatibility)
 

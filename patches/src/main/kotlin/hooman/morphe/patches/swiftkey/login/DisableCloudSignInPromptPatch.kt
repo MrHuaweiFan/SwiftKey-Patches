@@ -35,9 +35,7 @@ private val disableCloudSignInResourcePatch = resourcePatch(
 @Suppress("unused")
 val disableCloudSignInPromptPatch = bytecodePatch(
     name = "Disable cloud sign-in prompt",
-    description = "Keeps the optional Microsoft cloud sign-in onboarding from replacing SwiftKey's " +
-        "launcher, so local keyboard setup and settings remain usable without an account. This does " +
-        "not sign in or unlock cloud sync and other account-backed features.",
+    description = "Keeps the Microsoft cloud sign-in onboarding from hijacking the launcher.",
 ) {
     compatibleWith(swiftKeyCompatibility)
     dependsOn(disableCloudSignInResourcePatch)

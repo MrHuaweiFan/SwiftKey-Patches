@@ -5,7 +5,7 @@ group = "io.github.mrhuaweifan"
 patches {
     about {
         name = "SwiftKey Patches"
-        description = "Morphe patches for Microsoft SwiftKey 9.12.13.13."
+        description = "Morphe patches for Microsoft SwiftKey 9.12.13.13 and SwiftKey factory settings 2.2.0.314."
         source = "git@github.com:MrHuaweiFan/SwiftKey-Patches.git"
         author = "MrHuaweiFan"
         contact = "na"
