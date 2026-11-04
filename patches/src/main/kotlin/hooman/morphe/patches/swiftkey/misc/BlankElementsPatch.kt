@@ -3,16 +3,18 @@ package hooman.morphe.patches.swiftkey.misc
 import app.morphe.patcher.extensions.InstructionExtensions.addInstructions
 import app.morphe.patcher.extensions.InstructionExtensions.addInstructionsWithLabels
 import app.morphe.patcher.extensions.InstructionExtensions.instructions
+import app.morphe.patcher.patch.Option
 import app.morphe.patcher.patch.PatchException
 import app.morphe.patcher.patch.bytecodePatch
+import app.morphe.patcher.patch.intOption
 import app.morphe.patcher.patch.resourcePatch
-import app.morphe.patcher.util.smali.ExternalLabel
 import com.android.tools.smali.dexlib2.Opcode
 import com.android.tools.smali.dexlib2.iface.instruction.Instruction
 import com.android.tools.smali.dexlib2.iface.instruction.ReferenceInstruction
 import hooman.morphe.patches.swiftkey.debloat.ToolbarCatalogFingerprint
 import hooman.morphe.patches.swiftkey.debloat.ToolbarItemFactoryFingerprint
 import hooman.morphe.patches.swiftkey.swiftKeyCompatibility
+import org.w3c.dom.Element
 
 // The extension helper that appends the blank element ids to the main catalog list.
 private const val TOOLBAR_WITH_BLANKS =
@@ -60,41 +62,32 @@ private val blankElementsResourcesPatch = resourcePatch(
 }
 
 /**
- * Adds six blank elements to the keyboard's toolbar, next to the emoji, GIF and incognito
- * buttons. Each element renders as an empty, transparent button of exactly the same size as the
- * regular toolbar buttons and does nothing at all when tapped or long-pressed.
+ * The bytecode half of the patch: adds the blank ids to the toolbar item catalog and teaches the
+ * app's item factory the blank ids. Kept separate so the user-facing resource patch can carry the
+ * blank count option.
  *
- * 1.2.0 adds them as first-class catalog items instead of appending them to the rendered strip
- * list (the 1.1.0 approach, which pushed the real items to the left, left an empty block on the
- * right, and never showed the blanks in the customizer). The six ids now live in the item
+ * 1.2.0 added the blanks as first-class catalog items instead of appending them to the rendered
+ * strip list (the 1.1.0 approach, which pushed the real items to the left, left an empty block on
+ * the right, and never showed the blanks in the customizer). The blank ids now live in the item
  * catalog itself and the app's own item factory creates them, so the blanks appear in the
  * customizer's "reorder items" screen, can be dragged into the strip, reordered and removed
  * exactly like every normal item, and render wherever the user places them.
  */
-@Suppress("unused")
-val addBlankToolbarElementsPatch = bytecodePatch(
-    name = "Add blank toolbar elements",
-    description = "Adds six blank elements to the keyboard's toolbar - real catalog items like " +
-        "the emoji, GIF or incognito buttons, labeled Blank 1 to Blank 6, that render as empty " +
-        "transparent buttons of the same size and do nothing when tapped. Because they are " +
-        "proper items, they show up in the toolbar customizer's reorder screen and can be " +
-        "dragged, reordered and removed like any other item. On by default; turn it off before " +
-        "patching if you do not want the blank elements. 1.2.1 fixed the factory hook of " +
-        "1.2.0, whose inverted branch crashed the keyboard on open with 'No toolbar item for " +
-        "toolbar item type 100'.",
-    default = true,
+private val blankElementsBytecodePatch = bytecodePatch(
+    description = "Adds the blank ids to the toolbar item catalog and teaches the item factory " +
+        "the blank ids. Applied automatically with Add blank toolbar elements.",
 ) {
     compatibleWith(swiftKeyCompatibility)
     extendWith("extensions/swiftkey.mpe")
-    dependsOn(blankElementsResourcesPatch)
 
     execute {
-        // ---- 1. Add the six blank ids to the main toolbar item catalog -----------------------
+        // ---- 1. Add the blank ids to the main toolbar item catalog --------------------------
         //
         // The main catalog list of Lio/e;-><clinit> is built by Ltr/l;->i0(...). Routing the
-        // freshly built list through the extension helper right after the build appends the
-        // blank ids, so the catalog membership gate of the state builder lets them through and
-        // the customizer lists them.
+        // freshly built list through the extension helper right after the build appends the blank
+        // ids, so the catalog membership gate of the state builder lets them through and the
+        // customizer lists them. How many ids the helper appends is decided at runtime by the
+        // morphe_blank_count resource the resource half writes from the patch option.
         val catalogMethod = ToolbarCatalogFingerprint.method
         val mainBuilds = catalogMethod.instructions.withIndex()
             .filter { (_, instruction) ->
@@ -186,5 +179,73 @@ val addBlankToolbarElementsPatch = bytecodePatch(
                 nop
             """.trimIndent().prependIndent("    "),
         )
+    }
+}
+
+/**
+ * Adds blank elements to the keyboard's toolbar, next to the emoji, GIF or incognito buttons.
+ * Each element renders as an empty, transparent button of exactly the same size as the regular
+ * toolbar buttons and does nothing at all when tapped or long-pressed. They are real catalog
+ * items: they appear in the customizer's reorder screen and can be dragged, reordered and removed
+ * like any other item.
+ *
+ * How many blank elements are added is the patch option: 1 to 6, defaulting to 6 (the historical
+ * behavior). The chosen count is written to the morphe_blank_count integer resource, which the
+ * extension helper of the catalog rewrite reads at runtime, so the option applies without any
+ * additional bytecode injection.
+ */
+@Suppress("unused")
+val addBlankToolbarElementsPatch = resourcePatch(
+    name = "Add blank toolbar elements",
+    description = "Adds 1-6 blank toolbar elements you can reorder like any other item.",
+    default = true,
+) {
+    compatibleWith(swiftKeyCompatibility)
+
+    val blankCountOption: Option<Int> = intOption(
+        key = "blankCount",
+        default = 6,
+        values = mapOf(
+            "1" to 1,
+            "2" to 2,
+            "3" to 3,
+            "4" to 4,
+            "5" to 5,
+            "6" to 6,
+        ),
+        title = "Blank elements",
+        description = "How many blank elements to add to the toolbar (1 to 6).",
+        required = false,
+    ) {
+        it != null && it in 1..6
+    }
+
+    dependsOn(blankElementsResourcesPatch)
+    dependsOn(blankElementsBytecodePatch)
+
+    execute {
+        val count = blankCountOption.value ?: 6
+
+        // The count the extension helper reads at runtime. integers.xml exists in SwiftKey, so
+        // the entry is added to it (or updated when an older patched build is patched again).
+        document("res/values/integers.xml").use { document ->
+            val matches = document.getElementsByTagName("integer")
+                .let { nodes ->
+                    (0 until nodes.length)
+                        .mapNotNull { nodes.item(it) as? Element }
+                        .filter { it.getAttribute("name") == "morphe_blank_count" }
+                }
+            val existing = matches.singleOrNull()
+            if (existing != null) {
+                existing.textContent = count.toString()
+            } else {
+                document.documentElement.appendChild(
+                    document.createElement("integer").apply {
+                        setAttribute("name", "morphe_blank_count")
+                        textContent = count.toString()
+                    },
+                )
+            }
+        }
     }
 }
